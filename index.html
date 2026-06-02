@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="الحماية - بوابة العميل">
+<title>الحماية الأمنية — بوابة العميل</title>
+<link rel="manifest" href="#" id="pwa-manifest">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0D0F12;--bg-s:#13161B;--bg-e:#1A1E26;--bg-h:#20252F;
+  --br:rgba(255,255,255,0.07);--bra:rgba(200,169,110,0.3);
+  --gold:#C8A96E;--gdim:rgba(200,169,110,0.15);
+  --tp:#E8E6E1;--ts:#8A8D94;--tm:#555A63;
+  --red:#E05252;--green:#7DC47D;--blue:#5B9BD5;--amber:#E8A838;
+  --font:'IBM Plex Sans Arabic',Tahoma,sans-serif;
+  --mono:'IBM Plex Mono',monospace;
+}
+html,body{min-height:100%;background:var(--bg);color:var(--tp);font-family:var(--font);direction:rtl;font-size:14px}
+button{cursor:pointer;font-family:var(--font)}
+input,select,textarea{font-family:var(--font);background:var(--bg-e);color:var(--tp);border:1px solid var(--br);border-radius:8px;padding:10px 14px;font-size:14px;outline:none;width:100%;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--gold)}
+textarea{resize:vertical;min-height:100px}
+
+/* ── LOGIN ── */
+.login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse at top,#1A1E26 0%,#0D0F12 70%)}
+.login-box{background:var(--bg-s);border:1px solid var(--br);border-radius:16px;padding:40px 32px;width:100%;max-width:420px;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+.login-logo{font-size:60px;margin-bottom:16px;display:block}
+.login-brand{font-size:22px;font-weight:700;color:var(--gold);margin-bottom:4px}
+.login-sub{font-size:12px;color:var(--tm);font-family:var(--mono);margin-bottom:32px}
+.login-label{font-size:12px;color:var(--ts);display:block;margin-bottom:7px;text-align:right}
+.login-inp{background:var(--bg-e);border:2px solid var(--br);border-radius:10px;padding:14px 16px;font-size:16px;color:var(--tp);width:100%;font-family:var(--mono);outline:none;transition:border-color .2s;letter-spacing:.15em;text-align:center;text-transform:uppercase}
+.login-inp:focus{border-color:var(--gold);background:var(--bg-h)}
+.login-inp::placeholder{letter-spacing:.05em;text-transform:none;color:var(--tm)}
+.login-btn{width:100%;padding:14px;background:var(--gold);color:#0D0F12;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);margin-top:10px;transition:opacity .15s;display:flex;align-items:center;justify-content:center;gap:8px}
+.login-btn:hover{opacity:.88}
+.login-btn:disabled{opacity:.5;cursor:not-allowed}
+.login-err{font-size:12px;color:var(--red);margin-top:12px;min-height:20px;text-align:center;line-height:1.5}
+.login-hint{font-size:11px;color:var(--tm);margin-top:20px;line-height:1.7;padding:12px;background:rgba(255,255,255,.03);border-radius:8px;border:1px solid var(--br)}
+
+/* ── APP ── */
+.app{display:none;min-height:100vh;flex-direction:column}
+.app.show{display:flex}
+.app-header{background:var(--bg-s);border-bottom:1px solid var(--br);padding:0 20px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.header-logo{display:flex;align-items:center;gap:10px}
+.header-logo-icon{font-size:24px}
+.header-logo-text{font-size:13px;font-weight:700;color:var(--gold)}
+.header-logo-sub{font-size:9px;color:var(--tm);font-family:var(--mono)}
+.header-user{text-align:left}
+.header-user-name{font-size:12px;font-weight:500;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.header-user-code{font-size:9px;color:var(--tm);font-family:var(--mono)}
+.logout-btn{background:none;border:1px solid var(--br);border-radius:6px;padding:5px 10px;color:var(--ts);font-size:11px;cursor:pointer;font-family:var(--font);transition:all .15s}
+.logout-btn:hover{color:var(--red);border-color:rgba(224,82,82,.3)}
+
+/* ── ALERTS BAR ── */
+.alerts-bar{margin:0;padding:0}
+.alert-item{display:flex;align-items:center;gap:10px;padding:11px 20px;font-size:12px;border-bottom:1px solid var(--br)}
+.alert-item.red{background:rgba(224,82,82,.08);color:var(--red)}
+.alert-item.amber{background:rgba(232,168,56,.08);color:var(--amber)}
+
+/* ── CONTENT ── */
+.content{flex:1;padding:20px;max-width:680px;width:100%;margin:0 auto}
+
+/* ── SECTION CARD ── */
+.card{background:var(--bg-s);border:1px solid var(--br);border-radius:12px;overflow:hidden;margin-bottom:16px}
+.card-hd{display:flex;justify-content:space-between;align-items:center;padding:13px 18px;background:var(--bg-e);border-bottom:1px solid var(--br)}
+.card-title{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ts);display:flex;align-items:center;gap:8px}
+.card-body{padding:18px}
+
+/* ── INFO ROWS ── */
+.info-row{display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--br);font-size:13px;gap:10px}
+.info-row:last-child{border-bottom:none}
+.info-lbl{color:var(--tm)}
+.info-val{font-weight:500;font-family:var(--mono);font-size:12px;text-align:left}
+
+/* ── STATUS BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-green{background:rgba(125,196,125,.12);color:var(--green);border:1px solid rgba(125,196,125,.2)}
+.badge-red{background:rgba(224,82,82,.12);color:var(--red);border:1px solid rgba(224,82,82,.2)}
+.badge-amber{background:rgba(232,168,56,.12);color:var(--amber);border:1px solid rgba(232,168,56,.2)}
+.badge-blue{background:rgba(91,155,213,.12);color:var(--blue);border:1px solid rgba(91,155,213,.2)}
+
+/* ── DOC CARD ── */
+.doc-card{background:var(--bg-e);border:1px solid var(--br);border-radius:10px;padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:12px}
+.doc-icon{font-size:28px;flex-shrink:0}
+.doc-info{flex:1;min-width:0}
+.doc-name{font-size:13px;font-weight:600;margin-bottom:3px}
+.doc-exp{font-size:11px;font-family:var(--mono)}
+.doc-acts{display:flex;gap:7px;flex-shrink:0}
+
+/* ── BUTTONS ── */
+.btn-gold{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:12px 20px;background:var(--gold);color:#0D0F12;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);transition:opacity .15s;width:100%}
+.btn-gold:hover{opacity:.88}
+.btn-gold:disabled{opacity:.5;cursor:not-allowed}
+.btn-out{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:11px 20px;background:transparent;color:var(--ts);border:1px solid var(--br);border-radius:10px;font-size:13px;cursor:pointer;font-family:var(--font);transition:all .15s;width:100%}
+.btn-out:hover{color:var(--tp);border-color:rgba(255,255,255,.2)}
+.btn-red{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:12px 20px;background:rgba(224,82,82,.1);color:var(--red);border:1px solid rgba(224,82,82,.3);border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .15s;width:100%}
+.btn-red:hover{background:rgba(224,82,82,.18)}
+
+/* ── FORM ── */
+.form-grp{margin-bottom:16px}
+.form-lbl{font-size:12px;color:var(--ts);display:block;margin-bottom:7px}
+.form-lbl .req{color:var(--red)}
+.form-err{font-size:11px;color:var(--red);margin-top:5px}
+.form-success{display:flex;align-items:center;gap:9px;padding:14px;background:rgba(125,196,125,.1);border:1px solid rgba(125,196,125,.2);border-radius:10px;color:var(--green);font-size:13px;margin-bottom:16px}
+
+/* ── PHOTO UPLOAD ── */
+.photo-upload{border:2px dashed var(--br);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:all .15s}
+.photo-upload:hover{border-color:var(--gold);background:var(--gdim)}
+.photo-upload.has-photo{border-color:var(--green);border-style:solid}
+.photo-preview{width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-top:10px}
+
+/* ── NAV TABS ── */
+.nav-tabs{display:flex;background:var(--bg-s);border-bottom:1px solid var(--br);overflow-x:auto;-webkit-overflow-scrolling:touch;position:sticky;top:58px;z-index:99}
+.nav-tab{flex:1;min-width:70px;padding:12px 8px;text-align:center;font-size:11px;color:var(--ts);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;background:none;border-top:none;border-left:none;border-right:none;font-family:var(--font)}
+.nav-tab.active{color:var(--gold);border-bottom-color:var(--gold);background:var(--gdim)}
+.nav-tab i{display:block;font-size:18px;margin-bottom:3px}
+
+/* ── MODAL ── */
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(4px);z-index:1000;display:none;align-items:flex-end;justify-content:center;padding:0}
+.modal-ov.open{display:flex}
+.modal-box{background:var(--bg-s);border:1px solid var(--br);border-radius:20px 20px 0 0;padding:24px 20px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;animation:slideUp .25s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:40px;height:4px;background:var(--br);border-radius:2px;margin:0 auto 20px}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:18px;display:flex;align-items:center;gap:9px}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:12px 22px;border-radius:10px;font-size:13px;font-weight:500;z-index:2000;display:none;align-items:center;gap:9px;box-shadow:0 8px 32px rgba(0,0,0,.5);max-width:90vw;text-align:center}
+.toast.show{display:flex}
+.toast.ok{background:rgba(125,196,125,.15);border:1px solid rgba(125,196,125,.3);color:var(--green)}
+.toast.err{background:rgba(224,82,82,.15);border:1px solid rgba(224,82,82,.3);color:var(--red)}
+.toast.info{background:rgba(91,155,213,.15);border:1px solid rgba(91,155,213,.3);color:var(--blue)}
+
+/* ── EMPTY ── */
+.empty{padding:40px 20px;text-align:center;color:var(--tm)}
+.empty i{font-size:40px;opacity:.3;display:block;margin-bottom:12px}
+.empty-text{font-size:13px;color:var(--ts)}
+
+/* ── COUNTDOWN ── */
+.countdown{text-align:center;padding:20px;border-radius:12px;margin-bottom:16px}
+.countdown.urgent{background:rgba(224,82,82,.08);border:1px solid rgba(224,82,82,.2)}
+.countdown.warn{background:rgba(232,168,56,.08);border:1px solid rgba(232,168,56,.2)}
+.countdown.ok{background:rgba(125,196,125,.08);border:1px solid rgba(125,196,125,.2)}
+.countdown-num{font-size:48px;font-weight:700;font-family:var(--mono);line-height:1}
+.countdown-lbl{font-size:12px;color:var(--ts);margin-top:4px}
+
+@media(max-width:400px){.content{padding:14px}}
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN PAGE ══ -->
+<div class="login-page" id="login-page">
+  <div class="login-box">
+    <span class="login-logo">🛡</span>
+    <div class="login-brand">الحماية الأمنية</div>
+    <div class="login-sub">بوابة العميل · CLIENT PORTAL</div>
+
+    <div style="margin-bottom:14px;text-align:right">
+      <label class="login-label">كود التفعيل الخاص بك</label>
+      <input class="login-inp" id="code-input" type="text"
+        placeholder="HEM-XXXXX"
+        maxlength="12"
+        oninput="this.value=this.value.toUpperCase()"
+        onkeydown="if(event.key==='Enter')doClientLogin()">
+    </div>
+
+    <button class="login-btn" id="login-btn" onclick="doClientLogin()">
+      <i class="ti ti-login" style="font-size:16px;color:#0D0F12"></i>
+      دخول
+    </button>
+    <div class="login-err" id="login-err"></div>
+
+    <div class="login-hint">
+      <i class="ti ti-info-circle" style="font-size:13px"></i>
+      كود التفعيل يُرسَل لك من شركة الحماية الأمنية.<br>
+      للاستفسار: تواصل مع مزود الخدمة.
+    </div>
+  </div>
+</div>
+
+<!-- ══ CLIENT APP ══ -->
+<div class="app" id="client-app">
+
+  <header class="app-header">
+    <div class="header-logo">
+      <div class="header-logo-icon">🛡</div>
+      <div>
+        <div class="header-logo-text">الحماية الأمنية</div>
+        <div class="header-logo-sub">بوابة العميل</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span id="sync-ping" style="font-size:9px;color:var(--green);font-family:var(--mono);opacity:0;transition:opacity .5s">● متزامن</span>
+      <div class="header-user">
+        <div class="header-user-name" id="hdr-name"></div>
+        <div class="header-user-code" id="hdr-code"></div>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">
+        <i class="ti ti-logout" style="font-size:12px"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Alerts Bar -->
+  <div class="alerts-bar" id="alerts-bar"></div>
+
+  <!-- Nav Tabs -->
+  <nav class="nav-tabs">
+    <button class="nav-tab active" id="tab-home" onclick="showTab('home')">
+      <i class="ti ti-home"></i>الرئيسية
+    </button>
+    <button class="nav-tab" id="tab-docs" onclick="showTab('docs')">
+      <i class="ti ti-file-text"></i>الوثائق
+    </button>
+    <button class="nav-tab" id="tab-support" onclick="showTab('support')">
+      <i class="ti ti-tool"></i>الدعم
+    </button>
+    <button class="nav-tab" id="tab-renew" onclick="showTab('renew')">
+      <i class="ti ti-refresh"></i>التجديد
+    </button>
+  </nav>
+
+  <div class="content" id="tab-content"></div>
+</div>
+
+<!-- ══ MODALS ══ -->
+<div class="modal-ov" id="modal-ov" onclick="closeModalOv(event)">
+  <!-- Maintenance Modal -->
+  <div class="modal-box" id="modal-maintenance" style="display:none">
+    <div class="modal-handle"></div>
+    <div class="modal-title"><i class="ti ti-tool" style="color:var(--red)"></i>طلب دعم فني / صيانة</div>
+    <div class="form-success" id="maint-success" style="display:none">
+      <i class="ti ti-circle-check" style="font-size:18px"></i>
+      تم إرسال طلبك بنجاح. سنتواصل معك قريباً.
+    </div>
+    <div id="maint-form">
+      <div class="form-grp">
+        <label class="form-lbl">نوع المشكلة <span class="req">*</span></label>
+        <select id="m-type">
+          <option value="">-- اختر نوع المشكلة --</option>
+          <option value="cameras">📷 كاميرات</option>
+          <option value="recording">💾 نظام التسجيل</option>
+          <option value="network">🌐 شبكة / اتصالات</option>
+          <option value="sensors">🔔 أجهزة الإنذار</option>
+          <option value="other">🔧 أخرى</option>
+        </select>
+        <div class="form-err" id="e-mtype"></div>
+      </div>
+      <div class="form-grp">
+        <label class="form-lbl">وصف المشكلة <span class="req">*</span> (إلزامي - 20 حرف على الأقل)</label>
+        <textarea id="m-desc" placeholder="اشرح المشكلة بالتفصيل: متى بدأت؟ ماذا يحدث بالضبط؟"></textarea>
+        <div class="form-err" id="e-mdesc"></div>
+        <div style="font-size:10px;color:var(--tm);margin-top:4px;font-family:var(--mono)" id="m-char-count">0 / 20 حرف كحد أدنى</div>
+      </div>
+      <div class="form-grp">
+        <label class="form-lbl">صورة للمشكلة (اختياري)</label>
+        <div class="photo-upload" id="photo-upload-area" onclick="document.getElementById('m-photo').click()">
+          <i class="ti ti-camera" style="font-size:28px;color:var(--tm);display:block;margin-bottom:8px"></i>
+          <div style="font-size:12px;color:var(--ts)">اضغط لالتقاط صورة أو اختيار من المعرض</div>
+          <input type="file" id="m-photo" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoSelect(this)">
+        </div>
+        <img id="photo-preview" class="photo-preview" style="display:none">
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn-red" onclick="submitMaintenance()" id="maint-submit-btn">
+          <i class="ti ti-send" style="font-size:14px"></i>إرسال الطلب
+        </button>
+        <button class="btn-out" style="width:auto;padding:12px 18px" onclick="closeModal()">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Renewal Modal -->
+  <div class="modal-box" id="modal-renewal" style="display:none">
+    <div class="modal-handle"></div>
+    <div class="modal-title"><i class="ti ti-refresh" style="color:var(--amber)"></i>طلب تجديد العقد</div>
+    <div class="form-success" id="renew-success" style="display:none">
+      <i class="ti ti-circle-check" style="font-size:18px"></i>
+      تم إرسال طلب التجديد. سنتواصل معك لإتمام الإجراءات.
+    </div>
+    <div id="renew-form">
+      <div style="background:var(--bg-e);border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;line-height:1.7;color:var(--ts)">
+        <div style="color:var(--gold);font-weight:600;margin-bottom:6px">معلومات العقد الحالي</div>
+        <div id="renew-contract-info"></div>
+      </div>
+      <div class="form-grp">
+        <label class="form-lbl">ملاحظات إضافية (اختياري)</label>
+        <textarea id="r-notes" placeholder="أي ملاحظات أو استفسارات حول التجديد..."></textarea>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn-gold" onclick="submitRenewal()" id="renew-submit-btn">
+          <i class="ti ti-refresh" style="font-size:14px;color:#0D0F12"></i>إرسال طلب التجديد
+        </button>
+        <button class="btn-out" style="width:auto;padding:12px 18px" onclick="closeModal()">إلغاء</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════════
+// SUPABASE CONFIG
+// ════════════════════════════════════════════════════════
+const SUPA_URL = 'https://cptwrupvkzmlwlwuanuy.supabase.co';
+const SUPA_KEY = 'sb_publishable_HauWEr6oydqNjSmADMqPdg_YaE1xuuL';
+
+async function supaGet(table, filter=''){
+  const url = `${SUPA_URL}/rest/v1/${table}${filter?'?'+filter:''}`;
+  const res = await fetch(url,{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}});
+  if(!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+async function supaPost(table, body){
+  const res = await fetch(`${SUPA_URL}/rest/v1/${table}`,{
+    method:'POST',
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+    body: JSON.stringify(body)
+  });
+  if(!res.ok) throw new Error(await res.text());
+  return true;
+}
+
+// ════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════
+let CURRENT_CLIENT = null;
+let CLIENT_DOCS    = [];
+let activeTab      = 'home';
+let refreshTimer   = null;
+
+// ── Remember login ────────────────────────────────────────
+function saveSession(code){ localStorage.setItem('hem_client_code', code); }
+function loadSession(){ return localStorage.getItem('hem_client_code'); }
+function clearSession(){ localStorage.removeItem('hem_client_code'); }
+
+function today(){ return new Date().toISOString().split('T')[0]; }
+function daysDiff(a,b){ return Math.round((new Date(b)-new Date(a))/86400000); }
+function fmtD(d){
+  if(!d||d==='—')return'—';
+  return new Date(d).toLocaleDateString('ar-AE',{year:'numeric',month:'long',day:'numeric'});
+}
+
+// ════════════════════════════════════════════════════════
+// LOGIN
+// ════════════════════════════════════════════════════════
+async function doClientLogin(){
+  const code = document.getElementById('code-input').value.trim().toUpperCase();
+  const errEl = document.getElementById('login-err');
+  const btn   = document.getElementById('login-btn');
+
+  if(!code){ errEl.textContent='الرجاء إدخال كود التفعيل'; return; }
+  if(!code.startsWith('HEM-')){
+    errEl.textContent='كود التفعيل يجب أن يبدأ بـ HEM-';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader-2" style="font-size:16px;color:#0D0F12;animation:spin 1s linear infinite"></i> جارٍ التحقق...';
+  errEl.textContent = '';
+  await doClientLoginWithCode(code);
+  btn.disabled = false;
+  btn.innerHTML = '<i class="ti ti-login" style="font-size:16px;color:#0D0F12"></i> دخول';
+}
+
+async function doClientLoginWithCode(code){
+  const errEl = document.getElementById('login-err');
+
+  try{
+    // Find client by activation code
+    const results = await supaGet('clients', `activation_code=eq.${encodeURIComponent(code)}&select=*`);
+
+    if(!results || results.length === 0){
+      errEl.textContent = 'كود التفعيل غير صحيح. تأكد من الكود وأعد المحاولة.';
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ti ti-login" style="font-size:16px;color:#0D0F12"></i> دخول';
+      return;
+    }
+
+    const client = results[0];
+
+    // Check contract validity
+    if(client.contract_end){
+      const daysLeft = daysDiff(today(), client.contract_end);
+      if(daysLeft < -30){
+        // Expired more than 30 days ago — block access
+        errEl.innerHTML = `
+          ⚠️ انتهى تعاقدك منذ ${Math.abs(daysLeft)} يوم.<br>
+          يرجى التواصل مع شركة الحماية لتجديد العقد.
+        `;
+        btn.disabled = false;
+        btn.innerHTML = '<i class="ti ti-login" style="font-size:16px;color:#0D0F12"></i> دخول';
+        return;
+      }
+    }
+
+    // Load client docs
+    CLIENT_DOCS = await supaGet('documents', `client_id=eq.${client.id}`);
+
+    // Map DB fields to app fields
+    CURRENT_CLIENT = {
+      id:             client.id,
+      name:           client.name,
+      region:         client.region,
+      phone:          client.phone,
+      gps:            client.gps,
+      membershipNo:   client.membership_no,
+      certDate:       client.cert_date,
+      contractStart:  client.contract_start,
+      contractEnd:    client.contract_end,
+      activationCode: client.activation_code,
+      notes:          client.notes,
+    };
+
+    // Save session (remember login)
+    saveSession(code);
+
+    // Show app
+    document.getElementById('login-page').style.display = 'none';
+    document.getElementById('client-app').classList.add('show');
+    document.getElementById('hdr-name').textContent = client.name;
+    document.getElementById('hdr-code').textContent = code;
+
+    buildAlerts();
+    showTab('home');
+
+    // Start auto-refresh every 60 seconds
+    startAutoRefresh(code);
+
+  }catch(e){
+    errEl.textContent = 'خطأ في الاتصال. تأكد من الإنترنت وأعد المحاولة.';
+    console.error(e);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="ti ti-login" style="font-size:16px;color:#0D0F12"></i> دخول';
+}
+
+function doLogout(){
+  CURRENT_CLIENT = null;
+  CLIENT_DOCS    = [];
+  clearSession();
+  if(refreshTimer){ clearInterval(refreshTimer); refreshTimer=null; }
+  document.getElementById('client-app').classList.remove('show');
+  document.getElementById('login-page').style.display = 'flex';
+  document.getElementById('code-input').value = '';
+  document.getElementById('login-err').textContent = '';
+}
+
+// ════════════════════════════════════════════════════════
+// ALERTS
+// ════════════════════════════════════════════════════════
+function buildAlerts(){
+  const c = CURRENT_CLIENT;
+  const bar = document.getElementById('alerts-bar');
+  const alerts = [];
+
+  // Contract expiry alert
+  if(c.contractEnd){
+    const d = daysDiff(today(), c.contractEnd);
+    if(d < 0){
+      alerts.push({type:'red', icon:'ti-calendar-off', text:`انتهى تعاقدك منذ ${Math.abs(d)} يوم — يرجى التجديد`});
+    } else if(d <= 30){
+      alerts.push({type:'amber', icon:'ti-calendar-exclamation', text:`ينتهي تعاقدك بعد ${d} يوم — اضغط للتجديد`});
+    }
+  }
+
+  // Cert expiry alert
+  if(c.certDate){
+    // cert end = certDate + 1 year (same as contractEnd usually)
+  }
+
+  // Doc expiry alerts
+  CLIENT_DOCS.forEach(d=>{
+    if(d.expiry_date){
+      const dd = daysDiff(today(), d.expiry_date);
+      const dLabel = {safety_cert:'شهادة السلامة',license:'الرخصة',blueprint:'المخطط',contract:'العقد',other:'وثيقة'};
+      if(dd < 0){
+        alerts.push({type:'red', icon:'ti-file-x', text:`${dLabel[d.type]||'وثيقة'} منتهية منذ ${Math.abs(dd)} يوم`});
+      } else if(dd <= 30){
+        alerts.push({type:'amber', icon:'ti-file-alert', text:`${dLabel[d.type]||'وثيقة'} تنتهي بعد ${dd} يوم`});
+      }
+    }
+  });
+
+  bar.innerHTML = alerts.map(a=>`
+    <div class="alert-item ${a.type}">
+      <i class="ti ${a.icon}" style="font-size:16px;flex-shrink:0"></i>
+      <span>${a.text}</span>
+    </div>
+  `).join('');
+}
+
+// ════════════════════════════════════════════════════════
+// TABS
+// ════════════════════════════════════════════════════════
+function showTab(tab){
+  activeTab = tab;
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+tab)?.classList.add('active');
+  const content = document.getElementById('tab-content');
+  content.innerHTML = {
+    home:    renderHome(),
+    docs:    renderDocs(),
+    support: renderSupport(),
+    renew:   renderRenew(),
+  }[tab] || '';
+}
+
+// ── HOME TAB ──────────────────────────────────────────────
+function renderHome(){
+  const c = CURRENT_CLIENT;
+  const daysLeft = c.contractEnd ? daysDiff(today(), c.contractEnd) : null;
+  const cdClass  = daysLeft===null?'ok': daysLeft<0?'urgent': daysLeft<=30?'warn':'ok';
+  const cdColor  = cdClass==='urgent'?'var(--red)': cdClass==='warn'?'var(--amber)':'var(--green)';
+
+  return `
+  <!-- Countdown -->
+  ${daysLeft !== null ? `
+  <div class="countdown ${cdClass==='ok'?'ok':cdClass==='warn'?'warn':'urgent'}">
+    <div class="countdown-num" style="color:${cdColor}">
+      ${daysLeft < 0 ? Math.abs(daysLeft) : daysLeft}
+    </div>
+    <div class="countdown-lbl" style="color:${cdColor}">
+      ${daysLeft < 0 ? 'يوم مضى على انتهاء التعاقد' : 'يوم متبقي على انتهاء التعاقد'}
+    </div>
+    ${daysLeft <= 30 ? `<div style="margin-top:10px"><button class="btn-gold" style="max-width:200px;margin:0 auto" onclick="openRenewalModal()"><i class="ti ti-refresh" style="font-size:14px;color:#0D0F12"></i>تجديد الآن</button></div>` : ''}
+  </div>` : ''}
+
+  <!-- Client Info -->
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-title"><i class="ti ti-building-store" style="font-size:14px"></i>بيانات المنشأة</div>
+    </div>
+    <div class="card-body">
+      <div class="info-row"><span class="info-lbl">اسم المنشأة</span><span class="info-val" style="font-family:var(--font);font-size:13px">${c.name}</span></div>
+      <div class="info-row"><span class="info-lbl">المنطقة</span><span class="info-val" style="font-family:var(--font)">${c.region}</span></div>
+      <div class="info-row"><span class="info-lbl">رقم العضوية</span><span class="info-val">${c.membershipNo||'—'}</span></div>
+      <div class="info-row"><span class="info-lbl">رقم الهاتف</span><span class="info-val" style="direction:ltr">${c.phone||'—'}</span></div>
+      <div class="info-row"><span class="info-lbl">تاريخ إصدار الشهادة</span><span class="info-val">${fmtD(c.certDate)}</span></div>
+      <div class="info-row"><span class="info-lbl">بداية التعاقد</span><span class="info-val">${fmtD(c.contractStart)}</span></div>
+      <div class="info-row"><span class="info-lbl">انتهاء التعاقد</span>
+        <span class="info-val" style="color:${daysLeft!==null&&daysLeft<30?'var(--red)':'inherit'}">${fmtD(c.contractEnd)}</span>
+      </div>
+      ${c.gps ? `
+      <div class="info-row"><span class="info-lbl">الموقع</span>
+        <a href="https://www.google.com/maps?q=${encodeURIComponent(c.gps)}" target="_blank" style="color:var(--blue);font-size:11px;font-family:var(--mono);display:flex;align-items:center;gap:4px">
+          <i class="ti ti-map-pin" style="font-size:12px"></i>فتح الخريطة
+        </a>
+      </div>` : ''}
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+    <button class="btn-red" onclick="openMaintenanceModal()">
+      <i class="ti ti-tool" style="font-size:15px"></i>طلب دعم فني
+    </button>
+    <button class="btn-gold" onclick="openRenewalModal()">
+      <i class="ti ti-refresh" style="font-size:15px;color:#0D0F12"></i>طلب تجديد
+    </button>
+  </div>
+
+  <!-- Contract Status -->
+  <div class="card">
+    <div class="card-hd"><div class="card-title"><i class="ti ti-shield-check" style="font-size:14px"></i>حالة التعاقد</div></div>
+    <div class="card-body" style="text-align:center;padding:24px">
+      ${daysLeft === null ? `<span class="badge badge-blue">غير محدد</span>` :
+        daysLeft < 0 ? `<span class="badge badge-red"><i class="ti ti-x" style="font-size:11px"></i>منتهي</span>` :
+        daysLeft <= 30 ? `<span class="badge badge-amber"><i class="ti ti-alert-triangle" style="font-size:11px"></i>ينتهي قريباً</span>` :
+        `<span class="badge badge-green"><i class="ti ti-check" style="font-size:11px"></i>فعّال</span>`
+      }
+      ${daysLeft !== null ? `<div style="font-size:11px;color:var(--tm);margin-top:10px;font-family:var(--mono)">
+        ${c.contractStart} → ${c.contractEnd}
+      </div>` : ''}
+    </div>
+  </div>`;
+}
+
+// ── DOCS TAB ──────────────────────────────────────────────
+function renderDocs(){
+  const dtt  = {safety_cert:'🛡',license:'📋',blueprint:'🗺',contract:'📜',other:'📄'};
+  const dLbl = {safety_cert:'شهادة السلامة',license:'الرخصة التجارية',blueprint:'المخطط',contract:'عقد',other:'وثيقة'};
+
+  if(!CLIENT_DOCS.length){
+    return `<div class="empty"><i class="ti ti-file-off"></i><div class="empty-text">لا توجد وثائق مرفقة حالياً</div></div>`;
+  }
+
+  return `
+  <div style="margin-bottom:14px;font-size:12px;color:var(--ts)">
+    ${CLIENT_DOCS.length} وثيقة مسجّلة
+  </div>
+  ${CLIENT_DOCS.map(d=>{
+    const expD = d.expiry_date ? daysDiff(today(), d.expiry_date) : null;
+    const expColor = expD===null?'var(--tm)': expD<0?'var(--red)': expD<30?'var(--amber)':'var(--green)';
+    const expText  = expD===null?'': expD<0?`انتهت منذ ${Math.abs(expD)} يوم`: `تنتهي بعد ${expD} يوم`;
+    return `
+    <div class="doc-card">
+      <div class="doc-icon">${dtt[d.type]||'📄'}</div>
+      <div class="doc-info">
+        <div class="doc-name">${d.name||dLbl[d.type]||d.type}</div>
+        ${expText ? `<div class="doc-exp" style="color:${expColor}">${expText}</div>` : ''}
+        ${d.issue_date ? `<div class="doc-exp" style="color:var(--tm)">إصدار: ${d.issue_date}</div>` : ''}
+        ${d.expiry_date ? `<div class="doc-exp" style="color:var(--tm)">انتهاء: ${d.expiry_date}</div>` : ''}
+      </div>
+      <div class="doc-acts">
+        ${d.url ? `
+        <button onclick="previewDoc('${d.id}')" style="background:var(--bg-h);border:1px solid var(--br);border-radius:7px;padding:7px 10px;color:var(--ts);cursor:pointer;font-size:11px;display:flex;align-items:center;gap:4px;font-family:var(--font)">
+          <i class="ti ti-eye" style="font-size:13px"></i>عرض
+        </button>` : ''}
+      </div>
+    </div>`;
+  }).join('')}`;
+}
+
+// ── SUPPORT TAB ───────────────────────────────────────────
+function renderSupport(){
+  return `
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-hd"><div class="card-title"><i class="ti ti-headset" style="font-size:14px"></i>الدعم الفني</div></div>
+    <div class="card-body">
+      <p style="font-size:13px;color:var(--ts);line-height:1.7;margin-bottom:18px">
+        هل تواجه مشكلة في نظام الكاميرات أو الحماية؟<br>
+        أرسل لنا طلب دعم فني وسنتواصل معك في أقرب وقت.
+      </p>
+      <button class="btn-red" onclick="openMaintenanceModal()">
+        <i class="ti ti-tool" style="font-size:15px"></i>إرسال طلب دعم فني
+      </button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd"><div class="card-title"><i class="ti ti-clock" style="font-size:14px"></i>أوقات الدعم</div></div>
+    <div class="card-body">
+      <div class="info-row"><span class="info-lbl">الأحد — الخميس</span><span class="info-val">8:00 ص — 6:00 م</span></div>
+      <div class="info-row"><span class="info-lbl">الجمعة — السبت</span><span class="info-val">9:00 ص — 2:00 م</span></div>
+      <div class="info-row"><span class="info-lbl">الطوارئ</span><span class="info-val" style="color:var(--green)">24 / 7</span></div>
+    </div>
+  </div>`;
+}
+
+// ── RENEW TAB ─────────────────────────────────────────────
+function renderRenew(){
+  const c = CURRENT_CLIENT;
+  const daysLeft = c.contractEnd ? daysDiff(today(), c.contractEnd) : null;
+
+  return `
+  <div class="card">
+    <div class="card-hd"><div class="card-title"><i class="ti ti-refresh" style="font-size:14px"></i>تجديد العقد</div></div>
+    <div class="card-body">
+      <div style="background:var(--bg-e);border-radius:10px;padding:14px;margin-bottom:18px">
+        <div style="font-size:12px;color:var(--tm);margin-bottom:8px">العقد الحالي</div>
+        <div class="info-row"><span class="info-lbl">تاريخ الإصدار</span><span class="info-val">${fmtD(c.certDate)}</span></div>
+        <div class="info-row"><span class="info-lbl">تاريخ الانتهاء</span>
+          <span class="info-val" style="color:${daysLeft!==null&&daysLeft<30?'var(--red)':'inherit'}">${fmtD(c.contractEnd)}</span>
+        </div>
+        ${daysLeft!==null?`<div class="info-row"><span class="info-lbl">المتبقي</span>
+          <span class="info-val" style="color:${daysLeft<0?'var(--red)':daysLeft<30?'var(--amber)':'var(--green)'}">
+            ${daysLeft<0?`منتهي منذ ${Math.abs(daysLeft)} يوم`:`${daysLeft} يوم`}
+          </span>
+        </div>`:''}
+      </div>
+      <p style="font-size:13px;color:var(--ts);line-height:1.7;margin-bottom:18px">
+        لتجديد عقدك، اضغط الزر أدناه وسيتم إرسال طلب التجديد لفريقنا<br>
+        الذي سيتواصل معك لإتمام الإجراءات.
+      </p>
+      <button class="btn-gold" onclick="openRenewalModal()">
+        <i class="ti ti-refresh" style="font-size:15px;color:#0D0F12"></i>
+        ${daysLeft!==null&&daysLeft<0 ? 'تجديد العقد المنتهي' : 'طلب تجديد العقد'}
+      </button>
+    </div>
+  </div>`;
+}
+
+// ════════════════════════════════════════════════════════
+// MODALS
+// ════════════════════════════════════════════════════════
+function openMaintenanceModal(){
+  document.getElementById('modal-ov').classList.add('open');
+  document.querySelectorAll('.modal-box').forEach(m=>m.style.display='none');
+  document.getElementById('modal-maintenance').style.display='block';
+  document.getElementById('maint-success').style.display='none';
+  document.getElementById('maint-form').style.display='block';
+  document.getElementById('m-type').value='';
+  document.getElementById('m-desc').value='';
+  document.getElementById('m-char-count').textContent='0 / 20 حرف كحد أدنى';
+  document.getElementById('e-mtype').textContent='';
+  document.getElementById('e-mdesc').textContent='';
+  document.getElementById('photo-preview').style.display='none';
+  document.getElementById('photo-upload-area').classList.remove('has-photo');
+  document.getElementById('m-photo').value='';
+  window.selectedPhotoData=null;
+
+  // Live char count
+  document.getElementById('m-desc').oninput=function(){
+    const n=this.value.length;
+    const el=document.getElementById('m-char-count');
+    el.textContent=`${n} / 20 حرف كحد أدنى`;
+    el.style.color=n>=20?'var(--green)':'var(--tm)';
+  };
+}
+
+function openRenewalModal(){
+  document.getElementById('modal-ov').classList.add('open');
+  document.querySelectorAll('.modal-box').forEach(m=>m.style.display='none');
+  document.getElementById('modal-renewal').style.display='block';
+  document.getElementById('renew-success').style.display='none';
+  document.getElementById('renew-form').style.display='block';
+  document.getElementById('r-notes').value='';
+  const c=CURRENT_CLIENT;
+  const d=c.contractEnd?daysDiff(today(),c.contractEnd):null;
+  document.getElementById('renew-contract-info').innerHTML=`
+    <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>اسم المنشأة</span><strong>${c.name}</strong></div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>انتهاء العقد</span><strong style="color:${d!==null&&d<30?'var(--red)':'inherit'}">${fmtD(c.contractEnd)}</strong></div>
+    <div style="display:flex;justify-content:space-between"><span>الحالة</span><strong style="color:${d!==null&&d<0?'var(--red)':'var(--amber)'}">
+      ${d!==null&&d<0?`منتهي منذ ${Math.abs(d)} يوم`:d!==null?`ينتهي بعد ${d} يوم`:'—'}
+    </strong></div>`;
+}
+
+function closeModal(){
+  document.getElementById('modal-ov').classList.remove('open');
+  document.querySelectorAll('.modal-box').forEach(m=>m.style.display='none');
+}
+function closeModalOv(e){if(e.target===document.getElementById('modal-ov'))closeModal();}
+
+function handlePhotoSelect(input){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    window.selectedPhotoData=e.target.result;
+    const prev=document.getElementById('photo-preview');
+    prev.src=e.target.result;
+    prev.style.display='block';
+    document.getElementById('photo-upload-area').classList.add('has-photo');
+    document.getElementById('photo-upload-area').querySelector('div').textContent='تم اختيار الصورة ✓';
+  };
+  reader.readAsDataURL(file);
+}
+
+// ════════════════════════════════════════════════════════
+// SUBMIT MAINTENANCE
+// ════════════════════════════════════════════════════════
+async function submitMaintenance(){
+  const type = document.getElementById('m-type').value;
+  const desc = document.getElementById('m-desc').value.trim();
+  let ok=true;
+  if(!type){document.getElementById('e-mtype').textContent='يرجى اختيار نوع المشكلة';ok=false;}
+  else document.getElementById('e-mtype').textContent='';
+  if(!desc||desc.length<20){document.getElementById('e-mdesc').textContent='يرجى وصف المشكلة بالتفصيل (20 حرف على الأقل)';ok=false;}
+  else document.getElementById('e-mdesc').textContent='';
+  if(!ok)return;
+
+  const btn=document.getElementById('maint-submit-btn');
+  btn.disabled=true;
+  btn.innerHTML='<i class="ti ti-loader-2" style="animation:spin 1s linear infinite"></i> جارٍ الإرسال...';
+
+  try{
+    const ticket={
+      id: 't'+Date.now().toString(36),
+      client_id:    CURRENT_CLIENT.id,
+      type:         type,
+      description:  desc + (window.selectedPhotoData ? '\n[صورة مرفقة]' : ''),
+      priority:     'normal',
+      status:       'new',
+      created_at:   today(),
+    };
+    await supaPost('tickets', ticket);
+    document.getElementById('maint-success').style.display='flex';
+    document.getElementById('maint-form').style.display='none';
+    toast('تم إرسال طلب الدعم الفني بنجاح ✓');
+    setTimeout(()=>closeModal(), 2500);
+  }catch(e){
+    toast('خطأ في الإرسال. تأكد من الإنترنت وأعد المحاولة.','err');
+    console.error(e);
+  }
+  btn.disabled=false;
+  btn.innerHTML='<i class="ti ti-send" style="font-size:14px"></i>إرسال الطلب';
+}
+
+// ════════════════════════════════════════════════════════
+// SUBMIT RENEWAL
+// ════════════════════════════════════════════════════════
+async function submitRenewal(){
+  const btn=document.getElementById('renew-submit-btn');
+  btn.disabled=true;
+  btn.innerHTML='<i class="ti ti-loader-2" style="animation:spin 1s linear infinite"></i> جارٍ الإرسال...';
+
+  try{
+    const c=CURRENT_CLIENT;
+    const renewal={
+      id:            'r'+Date.now().toString(36),
+      client_id:     c.id,
+      client_name:   c.name,
+      region:        c.region,
+      membership_no: c.membershipNo||'',
+      phone:         c.phone||'',
+      current_end:   c.contractEnd||'',
+      notes:         document.getElementById('r-notes').value.trim(),
+      status:        'pending',
+      created_at:    today(),
+    };
+    await supaPost('renewal_requests', renewal);
+    document.getElementById('renew-success').style.display='flex';
+    document.getElementById('renew-form').style.display='none';
+    toast('تم إرسال طلب التجديد بنجاح ✓');
+    setTimeout(()=>closeModal(), 2500);
+  }catch(e){
+    toast('خطأ في الإرسال. تأكد من الإنترنت وأعد المحاولة.','err');
+    console.error(e);
+  }
+  btn.disabled=false;
+  btn.innerHTML='<i class="ti ti-refresh" style="font-size:14px;color:#0D0F12"></i>إرسال طلب التجديد';
+}
+
+// ════════════════════════════════════════════════════════
+// AUTO REFRESH + SILENT DATA RELOAD
+// ════════════════════════════════════════════════════════
+function startAutoRefresh(code){
+  if(refreshTimer){ clearInterval(refreshTimer); }
+  refreshTimer = setInterval(async ()=>{
+    await silentRefresh(code);
+  }, 60000); // every 60 seconds
+}
+
+async function silentRefresh(code){
+  if(!CURRENT_CLIENT) return;
+  try{
+    // Refresh client data
+    const results = await supaGet('clients',
+      `activation_code=eq.${encodeURIComponent(code)}&select=*`);
+    if(!results || !results.length) return;
+    const client = results[0];
+
+    // Check if contract still valid
+    if(client.contract_end){
+      const daysLeft = daysDiff(today(), client.contract_end);
+      if(daysLeft < -30){
+        // Contract expired — logout
+        doLogout();
+        return;
+      }
+    }
+
+    // Update client data
+    CURRENT_CLIENT = {
+      id:             client.id,
+      name:           client.name,
+      region:         client.region,
+      phone:          client.phone,
+      gps:            client.gps,
+      membershipNo:   client.membership_no,
+      certDate:       client.cert_date,
+      contractStart:  client.contract_start,
+      contractEnd:    client.contract_end,
+      activationCode: client.activation_code,
+      notes:          client.notes,
+    };
+
+    // Refresh docs
+    CLIENT_DOCS = await supaGet('documents', `client_id=eq.${client.id}`);
+
+    // Update alerts bar silently
+    buildAlerts();
+
+    // Refresh current tab content silently
+    showTab(activeTab);
+
+    // Show sync indicator briefly
+    showSyncPing();
+  }catch(e){
+    console.log('Silent refresh error:', e);
+  }
+}
+
+let syncPingTimer;
+function showSyncPing(){
+  const el = document.getElementById('sync-ping');
+  if(!el) return;
+  el.style.opacity='1';
+  clearTimeout(syncPingTimer);
+  syncPingTimer = setTimeout(()=>{ el.style.opacity='0'; }, 2000);
+}
+
+// ════════════════════════════════════════════════════════
+// DOC PREVIEW
+// ════════════════════════════════════════════════════════
+function previewDoc(docId){
+  const d=CLIENT_DOCS.find(x=>x.id===docId);
+  if(!d||!d.url){toast('لا يوجد ملف للعرض','err');return;}
+  window.open(d.url,'_blank');
+}
+
+// ════════════════════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════════════════════
+let toastT;
+function toast(msg,type='ok'){
+  const el=document.getElementById('toast');
+  el.textContent=(type==='ok'?'✓  ':type==='err'?'⚠  ':'ℹ  ')+msg;
+  el.className='toast show '+(type==='ok'?'ok':type==='err'?'err':'info');
+  clearTimeout(toastT);
+  toastT=setTimeout(()=>el.classList.remove('show'),3500);
+}
+
+// ════════════════════════════════════════════════════════
+// PWA
+// ════════════════════════════════════════════════════════
+const manifest={
+  name:"الحماية الأمنية — بوابة العميل",
+  short_name:"بوابة العميل",
+  display:"standalone",
+  background_color:"#0D0F12",
+  theme_color:"#0D0F12",
+  icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230D0F12'/><text y='.9em' font-size='85'>🛡</text></svg>",sizes:"any",type:"image/svg+xml"}]
+};
+window.addEventListener('load', async ()=>{
+  const blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
+  document.getElementById('pwa-manifest').href=URL.createObjectURL(blob);
+
+  // Auto-login if session saved
+  const savedCode = loadSession();
+  if(savedCode){
+    // Show loading state on login page briefly
+    document.getElementById('code-input').value = savedCode;
+    const btn = document.getElementById('login-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ti ti-loader-2" style="font-size:16px;color:#0D0F12;animation:spin 1s linear infinite"></i> جارٍ الدخول...';
+
+    try{
+      await doClientLoginWithCode(savedCode);
+    }catch(e){
+      // If auto-login fails, show login page normally
+      clearSession();
+      btn.disabled = false;
+      btn.innerHTML = '<i class="ti ti-login" style="font-size:16px;color:#0D0F12"></i> دخول';
+      document.getElementById('code-input').focus();
+    }
+  } else {
+    document.getElementById('code-input').focus();
+  }
+});
+
+// Spinner animation
+const style=document.createElement('style');
+style.textContent='@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}';
+document.head.appendChild(style);
+</script>
+</body>
+</html>
