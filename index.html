@@ -346,6 +346,7 @@ function loadSession(){ return localStorage.getItem('hem_client_code'); }
 function clearSession(){ localStorage.removeItem('hem_client_code'); }
 
 function today(){ return new Date().toISOString().split('T')[0]; }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function daysDiff(a,b){ return Math.round((new Date(b)-new Date(a))/86400000); }
 function fmtD(d){
   if(!d||d==='—')return'—';
