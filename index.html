@@ -212,7 +212,7 @@ textarea{resize:vertical;min-height:100px}
   <div class="alerts-bar" id="alerts-bar"></div>
 
   <!-- Nav Tabs -->
-  <nav class="nav-tabs">
+  <nav class="nav-tabs" id="client-nav-tabs">
     <button class="nav-tab active" id="tab-home" onclick="showTab('home')">
       <i class="ti ti-home"></i>الرئيسية
     </button>
@@ -334,6 +334,9 @@ async function supaPost(table, body){
 // ════════════════════════════════════════════════════════
 let CURRENT_CLIENT = null;
 let CLIENT_DOCS    = [];
+let CLIENT_RENEWALS = [];
+let CLIENT_PAYMENT_LINK   = null;
+let CLIENT_PAYMENT_AMOUNT = null;
 let activeTab      = 'home';
 let refreshTimer   = null;
 
@@ -387,23 +390,29 @@ async function doClientLoginWithCode(code){
 
     const client = results[0];
 
-    // Check contract validity
-    if(client.contract_end){
-      const daysLeft = daysDiff(today(), client.contract_end);
-      if(daysLeft < -30){
-        // Expired more than 30 days ago — block access
-        errEl.innerHTML = `
-          ⚠️ انتهى تعاقدك منذ ${Math.abs(daysLeft)} يوم.<br>
-          يرجى التواصل مع شركة الحماية لتجديد العقد.
-        `;
-        btn.disabled = false;
-        btn.innerHTML = '<i class="ti ti-login" style="font-size:16px;color:#0D0F12"></i> دخول';
-        return;
-      }
-    }
+    // Check contract validity — no hard block, show expired page instead
+    const contractDays = client.contract_end ? daysDiff(today(), client.contract_end) : 999;
+    const isExpired = contractDays < 0;
 
-    // Load client docs
-    CLIENT_DOCS = await supaGet('documents', `client_id=eq.${client.id}`);
+    // Load client docs + renewals
+    const [docsData, renewalsData] = await Promise.all([
+      supaGet('documents', `client_id=eq.${client.id}`),
+      supaGet('renewal_requests', `client_id=eq.${client.id}&order=created_at.desc`),
+    ]);
+    CLIENT_DOCS     = docsData || [];
+    CLIENT_RENEWALS = renewalsData || [];
+    // Check for pending payment link
+    const pendingPayment = CLIENT_RENEWALS.find(r=>r.status==='awaiting_payment'&&r.notes&&r.notes.includes('LINK:'));
+    if(pendingPayment){
+      const notes = pendingPayment.notes||'';
+      const amountMatch = notes.match(/AMOUNT:([^|]+)/);
+      const linkMatch   = notes.match(/LINK:(.+)/);
+      CLIENT_PAYMENT_AMOUNT = amountMatch ? amountMatch[1].trim() : '';
+      CLIENT_PAYMENT_LINK   = linkMatch   ? linkMatch[1].trim()   : null;
+    } else {
+      CLIENT_PAYMENT_LINK   = null;
+      CLIENT_PAYMENT_AMOUNT = null;
+    }
 
     // Map DB fields to app fields
     CURRENT_CLIENT = {
@@ -429,8 +438,13 @@ async function doClientLoginWithCode(code){
     document.getElementById('hdr-name').textContent = client.name;
     document.getElementById('hdr-code').textContent = code;
 
-    buildAlerts();
-    showTab('home');
+    if(isExpired){
+      // Show expired page only
+      showExpiredPage();
+    } else {
+      buildAlerts();
+      showTab('home');
+    }
 
     // Start auto-refresh every 60 seconds
     startAutoRefresh(code);
@@ -653,6 +667,18 @@ function renderRenew(){
   const daysLeft = c.contractEnd ? daysDiff(today(), c.contractEnd) : null;
 
   return `
+  <!-- Check for pending payment -->
+  ${CLIENT_PAYMENT_LINK ? `
+  <div style="background:rgba(37,211,102,.08);border:2px solid rgba(37,211,102,.3);border-radius:12px;padding:20px;margin-bottom:16px;text-align:center">
+    <div style="font-size:18px;margin-bottom:8px">💳</div>
+    <div style="font-size:14px;font-weight:700;color:#25D366;margin-bottom:5px">رابط الدفع جاهز</div>
+    <div style="font-size:13px;color:var(--ts);margin-bottom:5px">المبلغ المطلوب: <strong style="color:var(--tp)">${CLIENT_PAYMENT_AMOUNT} درهم</strong></div>
+    <div style="font-size:12px;color:var(--tm);margin-bottom:16px">ادفع الآن لإتمام تجديد عقدك</div>
+    <a href="${CLIENT_PAYMENT_LINK}" target="_blank" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 28px;background:#25D366;color:#fff;border-radius:10px;text-decoration:none;font-size:14px;font-weight:700">
+      <i class="ti ti-credit-card" style="font-size:16px"></i>ادفع الآن
+    </a>
+  </div>` : ''}
+
   <div class="card">
     <div class="card-hd"><div class="card-title"><i class="ti ti-refresh" style="font-size:14px"></i>تجديد العقد</div></div>
     <div class="card-body">
@@ -668,14 +694,14 @@ function renderRenew(){
           </span>
         </div>`:''}
       </div>
-      <p style="font-size:13px;color:var(--ts);line-height:1.7;margin-bottom:18px">
+      ${CLIENT_PAYMENT_LINK?'':`<p style="font-size:13px;color:var(--ts);line-height:1.7;margin-bottom:18px">
         لتجديد عقدك، اضغط الزر أدناه وسيتم إرسال طلب التجديد لفريقنا<br>
         الذي سيتواصل معك لإتمام الإجراءات.
       </p>
       <button class="btn-gold" onclick="openRenewalModal()">
         <i class="ti ti-refresh" style="font-size:15px;color:#0D0F12"></i>
         ${daysLeft!==null&&daysLeft<0 ? 'تجديد العقد المنتهي' : 'طلب تجديد العقد'}
-      </button>
+      </button>`}
     </div>
   </div>`;
 }
@@ -868,11 +894,21 @@ async function silentRefresh(code){
     // Refresh docs
     CLIENT_DOCS = await supaGet('documents', `client_id=eq.${client.id}`);
 
+    // Check if contract status changed
+    const newDaysLeft = CURRENT_CLIENT.contractEnd ? daysDiff(today(), CURRENT_CLIENT.contractEnd) : 999;
+    const nowExpired  = newDaysLeft < 0;
+
     // Update alerts bar silently
-    buildAlerts();
+    if(!nowExpired) buildAlerts();
 
     // Refresh current tab content silently
-    showTab(activeTab);
+    if(nowExpired){
+      var nt=document.getElementById('client-nav-tabs');if(nt)nt.style.display='none';
+      showExpiredPage();
+    } else {
+      var nt=document.getElementById('client-nav-tabs');if(nt)nt.style.display='flex';
+      showTab(activeTab);
+    }
 
     // Show sync indicator briefly
     showSyncPing();
@@ -902,6 +938,118 @@ function previewDoc(docId){
 // ════════════════════════════════════════════════════════
 // TOAST
 // ════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
+// EXPIRED CONTRACT PAGE
+// ════════════════════════════════════════════════════════
+function showExpiredPage(){
+  const c = CURRENT_CLIENT;
+  const daysSince = c.contractEnd ? Math.abs(daysDiff(today(), c.contractEnd)) : 0;
+
+  // Hide nav tabs
+  var nt=document.getElementById('client-nav-tabs');if(nt)nt.style.display='none';
+  document.getElementById('alerts-bar').innerHTML = '';
+
+  // Show expired content
+  document.getElementById('tab-content').innerHTML = `
+  <div style="max-width:420px;margin:0 auto;padding:20px 0;text-align:center">
+
+    <!-- Expired Icon -->
+    <div style="width:90px;height:90px;border-radius:50%;background:rgba(224,82,82,.1);border:2px solid rgba(224,82,82,.2);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:42px">
+      🔒
+    </div>
+
+    <!-- Company Name -->
+    <div style="font-size:13px;color:var(--tm);margin-bottom:6px">شركة الحماية للأجهزة الإلكترونية</div>
+
+    <!-- Title -->
+    <div style="font-size:20px;font-weight:700;color:var(--tp);margin-bottom:8px">
+      انتهى تعاقدك
+    </div>
+
+    <!-- Client Name -->
+    <div style="font-size:14px;color:var(--gold);margin-bottom:20px">${esc(c.name)}</div>
+
+    <!-- Contract info box -->
+    <div style="background:rgba(224,82,82,.08);border:1px solid rgba(224,82,82,.2);border-radius:12px;padding:16px;margin-bottom:24px;text-align:right">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(224,82,82,.15)">
+        <span style="font-size:12px;color:var(--tm)">تاريخ انتهاء العقد</span>
+        <span style="font-size:13px;font-weight:700;color:var(--red);font-family:var(--mono)">${c.contractEnd||'—'}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:12px;color:var(--tm)">مضى على الانتهاء</span>
+        <span style="font-size:13px;font-weight:700;color:var(--red)">${daysSince} يوم</span>
+      </div>
+    </div>
+
+    <!-- Blocked features notice -->
+    <div style="background:var(--bg-s);border:1px solid var(--br);border-radius:12px;padding:14px;margin-bottom:24px;text-align:right">
+      <div style="font-size:11px;color:var(--tm);margin-bottom:10px;text-transform:uppercase;letter-spacing:.08em">الخدمات الموقوفة مؤقتاً</div>
+      <div style="display:grid;gap:7px">
+        <div style="display:flex;align-items:center;gap:9px;font-size:12px;color:var(--ts)">
+          <i class="ti ti-file-off" style="font-size:14px;color:var(--red)"></i>عرض الوثائق والشهادات
+        </div>
+        <div style="display:flex;align-items:center;gap:9px;font-size:12px;color:var(--ts)">
+          <i class="ti ti-tool-off" style="font-size:14px;color:var(--red)"></i>طلبات الدعم الفني
+        </div>
+      </div>
+    </div>
+
+    <!-- Renewal button -->
+    ${CLIENT_RENEWAL_SENT ? `
+    <div style="background:rgba(232,168,56,.08);border:1px solid rgba(232,168,56,.2);border-radius:12px;padding:16px;margin-bottom:16px">
+      <i class="ti ti-clock" style="font-size:20px;color:var(--amber);display:block;margin-bottom:8px"></i>
+      <div style="font-size:13px;font-weight:600;color:var(--amber);margin-bottom:4px">تم إرسال طلب التجديد</div>
+      <div style="font-size:12px;color:var(--ts)">سنتواصل معك قريباً لإتمام الإجراءات</div>
+    </div>` : `
+    <button class="btn-gold" onclick="submitExpiredRenewal()" id="expired-renew-btn">
+      <i class="ti ti-refresh" style="font-size:15px;color:#0D0F12"></i>
+      طلب تجديد العقد
+    </button>`}
+
+    ${CLIENT_PAYMENT_LINK ? `
+    <div style="margin-top:16px;background:rgba(37,211,102,.08);border:2px solid rgba(37,211,102,.3);border-radius:12px;padding:20px">
+      <div style="font-size:14px;font-weight:700;color:#25D366;margin-bottom:5px">💳 رابط الدفع جاهز</div>
+      <div style="font-size:13px;color:var(--ts);margin-bottom:4px">المبلغ المطلوب:</div>
+      <div style="font-size:24px;font-weight:700;color:var(--tp);margin-bottom:14px">${CLIENT_PAYMENT_AMOUNT} درهم</div>
+      <a href="${CLIENT_PAYMENT_LINK}" target="_blank"
+        style="display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;background:#25D366;color:#fff;border-radius:10px;text-decoration:none;font-size:14px;font-weight:700">
+        <i class="ti ti-credit-card" style="font-size:16px"></i>ادفع الآن
+      </a>
+      <div style="font-size:10px;color:var(--tm);margin-top:8px">بعد الدفع سيتم تفعيل حسابك خلال 24 ساعة</div>
+    </div>` : ''}
+
+  </div>`;
+}
+
+var CLIENT_RENEWAL_SENT = false;
+
+async function submitExpiredRenewal(){
+  const btn = document.getElementById('expired-renew-btn');
+  if(btn){ btn.disabled=true; btn.innerHTML='<i class="ti ti-loader-2" style="animation:spin 1s linear infinite"></i> جارٍ الإرسال...'; }
+  const c = CURRENT_CLIENT;
+  try{
+    const renewal = {
+      id:            'r'+Date.now().toString(36),
+      client_id:     c.id,
+      client_name:   c.name,
+      region:        c.region||'',
+      membership_no: c.membershipNo||'',
+      phone:         c.phone||'',
+      current_end:   c.contractEnd||'',
+      notes:         'طلب تجديد بعد انتهاء العقد',
+      status:        'pending',
+      created_at:    today(),
+    };
+    await supaPost('renewal_requests', renewal);
+    CLIENT_RENEWAL_SENT = true;
+    toast('تم إرسال طلب التجديد بنجاح ✓');
+    showExpiredPage(); // refresh
+  }catch(e){
+    toast('خطأ في الإرسال','err');
+    if(btn){ btn.disabled=false; btn.innerHTML='<i class="ti ti-refresh" style="font-size:15px;color:#0D0F12"></i>طلب تجديد العقد'; }
+  }
+}
+
 let toastT;
 function toast(msg,type='ok'){
   const el=document.getElementById('toast');
